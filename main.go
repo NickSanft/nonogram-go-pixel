@@ -5,9 +5,13 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
+	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 	"image"
 	_ "image/png"
 	"os"
+	"time"
 )
 
 const (
@@ -115,6 +119,7 @@ func (blk block) draw(t pixel.Target) {
 type world struct {
 	brd         *board
 	worldMap    [][]uint8
+	solutionMap [][]uint8
 }
 
 var World = &world{}
@@ -130,15 +135,20 @@ func run() {
 		panic(err)
 	}
 
-	worldMap := [][]uint8{
-		{0, 0, 0, 0, 0},
+	solutionMap := [][]uint8{
+		{1, 1, 1, 1, 0},
 		{0, 1, 0, 1, 1},
-		{2, 1, 2, 2, 0},
+		{0, 1, 0, 0, 0},
 		{0, 0, 0, 0, 0},
 		{1, 1, 1, 1, 1},
 	}
-	World.worldMap = worldMap
+	World.solutionMap = solutionMap
 
+	worldMap := make([][]uint8, len(solutionMap))
+	for i := range worldMap {
+		worldMap[i] = make([]uint8, len(solutionMap[0]))
+	}
+	World.worldMap = worldMap
 
 	sheet, err := getSheet(shapesDir)
 
@@ -148,6 +158,15 @@ func run() {
 	World.brd = brd
 
 	for !win.Closed() {
+		if checkForWin() {
+			win.Clear(colornames.Black)
+			drawText(win, "YOU WON!!", win.Bounds().Center())
+			win.Update()
+			time.Sleep(2000 * time.Millisecond)
+			break
+		}
+		checkMouseClicks(win, worldMap)
+
 		imd.Clear()
 		brd.draw(imd)
 		imd.Draw(win)
@@ -155,7 +174,59 @@ func run() {
 	}
 }
 
+func checkMouseClicks(win *pixelgl.Window, worldMap [][]uint8) {
+	var leftPressed = win.JustPressed(pixelgl.MouseButtonLeft)
+	var rightPressed = win.JustPressed(pixelgl.MouseButtonRight)
+	if leftPressed || rightPressed {
+		var pos = win.MousePosition()
+		for i := 0; i < len(worldMap); i++ {
+			for y := 0; y < len(worldMap[0]); y++ {
+				var gridPos = getRectInGrid(WindowWidth, WindowHeight, len(World.worldMap[0]), len(World.worldMap), y+1, i)
+				if gridPos.Contains(pos) {
+					var x = abs(i-len(worldMap)) - 1
+					var gridValue = worldMap[x][y]
+					if leftPressed {
+						if gridValue == empty {
+							worldMap[x][y] = circle
+						} else {
+							worldMap[x][y] = empty
+						}
+					}
+					if rightPressed {
+						if gridValue == empty {
+							worldMap[x][y] = cross
+						} else {
+							worldMap[x][y] = empty
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
+func checkForWin() bool {
+	var solutionMap = World.solutionMap
+	var worldMap = World.worldMap
+	for i := 0; i < len(solutionMap); i++ {
+		for j := 0; j < len(solutionMap[0]); j++ {
+			if solutionMap[i][j] == 1 && worldMap[i][j] != 1 {
+				return false
+			} else if solutionMap[i][j] != 1 && worldMap[i][j] == 1 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func drawText(win *pixelgl.Window, textToPrint string, v pixel.Vec) {
+	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	basicTxt := text.New(v, basicAtlas)
+	basicTxt.Color = colornames.Red
+	fmt.Fprintln(basicTxt, textToPrint)
+	basicTxt.Draw(win, pixel.IM.Scaled(basicTxt.Orig, 4))
+}
 
 func main() {
 	pixelgl.Run(run)
