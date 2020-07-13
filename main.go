@@ -137,10 +137,10 @@ func run() {
 	}
 
 	solutionMap := [][]uint8{
-		{1, 1, 1, 1, 0},
-		{0, 1, 0, 1, 1},
-		{0, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0},
+		{1, 1, 0, 1, 1},
+		{1, 1, 0, 1, 1},
+		{0, 1, 0, 1, 0},
+		{0, 0, 1, 0, 0},
 		{1, 1, 1, 1, 1},
 	}
 	World.solutionMap = solutionMap
@@ -161,7 +161,7 @@ func run() {
 	for !win.Closed() {
 		if checkForWin() {
 			win.Clear(colornames.Black)
-			drawText(win, "YOU WON!!", win.Bounds().Center())
+			drawText(win, "YOU WON!!", win.Bounds().Min)
 			win.Update()
 			time.Sleep(2000 * time.Millisecond)
 			break
@@ -261,18 +261,18 @@ func getSolutionNumbers(win *pixelgl.Window) {
 			if currentVal == 1 {
 				yCount++
 			} else if yCount > 0 {
-				result = result + strconv.Itoa(yCount) + " "
+				result = result + strconv.Itoa(yCount) + "\n"
 				//println(yCount)
 				yCount = 0
 			}
 		}
 		if yCount > 0 {
-			result = result + strconv.Itoa(yCount) + " "
+			result = result + strconv.Itoa(yCount) + "\n"
 			yCount = 0
 		}
 		//println(result)
 		var rect = getRectInGrid(WindowWidth, WindowHeight, len(solutionMap[0]), len(solutionMap), i+1, len(solutionMap))
-		drawText(win, result, rect.Min)
+		drawText(win, result, rect.Center())
 		//println("END OF LINE")
 	}
 
