@@ -11,6 +11,7 @@ import (
 	"image"
 	_ "image/png"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -166,6 +167,7 @@ func run() {
 			break
 		}
 		checkMouseClicks(win, worldMap)
+		getSolutionNumbers(win)
 
 		imd.Clear()
 		brd.draw(imd)
@@ -218,6 +220,62 @@ func checkForWin() bool {
 		}
 	}
 	return true
+}
+
+func getSolutionNumbers(win *pixelgl.Window) {
+	var solutionMap = World.solutionMap
+
+	for i := 0; i < len(solutionMap); i++ {
+		var result = ""
+		var xCount = 0
+
+		for j := 0; j < len(solutionMap[0]); j++ {
+			var currentVal = solutionMap[i][j]
+			if currentVal == 1 {
+				xCount++
+			} else if xCount > 0 {
+				result = result + strconv.Itoa(xCount) + " "
+				//println(xCount)
+				xCount = 0
+			}
+		}
+		if xCount > 0 {
+			result = result + strconv.Itoa(xCount) + " "
+			//println(xCount)
+			xCount = 0
+		}
+		//var rect = getRectInGrid(WindowWidth, WindowHeight, len(World.worldMap[0]), len(World.worldMap), 0, i)
+		//println(result)
+		var rect = getRectInGrid(WindowWidth, WindowHeight, len(solutionMap[0]), len(solutionMap), 0, abs(i-len(solutionMap))-1)
+		drawText(win, result, rect.Min)
+		//println("END OF LINE")
+	}
+	//println("END OF X")
+
+	for i := 0; i < len(solutionMap); i++ {
+		var result = ""
+		var yCount = 0
+
+		for j := 0; j < len(solutionMap[0]); j++ {
+			var currentVal = solutionMap[j][i]
+			if currentVal == 1 {
+				yCount++
+			} else if yCount > 0 {
+				result = result + strconv.Itoa(yCount) + " "
+				//println(yCount)
+				yCount = 0
+			}
+		}
+		if yCount > 0 {
+			result = result + strconv.Itoa(yCount) + " "
+			yCount = 0
+		}
+		//println(result)
+		var rect = getRectInGrid(WindowWidth, WindowHeight, len(solutionMap[0]), len(solutionMap), i+1, len(solutionMap))
+		drawText(win, result, rect.Min)
+		//println("END OF LINE")
+	}
+
 }
 
 func drawText(win *pixelgl.Window, textToPrint string, v pixel.Vec) {
